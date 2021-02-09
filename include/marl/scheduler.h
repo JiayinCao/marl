@@ -48,6 +48,7 @@ class Scheduler {
   using TimePoint = std::chrono::system_clock::time_point;
   using Predicate = std::function<bool()>;
   using ThreadInitializer = std::function<void(int workerId)>;
+  using ThreadShutDown = std::function<void(int workerId)>;
 
   // Config holds scheduler configuration settings that can be passed to the
   // Scheduler constructor.
@@ -62,6 +63,9 @@ class Scheduler {
       // Initializer function to call after thread creation and before any work
       // is run by the thread.
       ThreadInitializer initializer;
+
+      // A chance to be called before thread is shutdown
+      ThreadShutDown    shutdownFunc;
 
       // Thread affinity policy to use for worker threads.
       std::shared_ptr<Thread::Affinity::Policy> affinityPolicy;
@@ -87,6 +91,8 @@ class Scheduler {
     MARL_NO_EXPORT inline Config& setWorkerThreadCount(int);
     MARL_NO_EXPORT inline Config& setWorkerThreadInitializer(
         const ThreadInitializer&);
+    MARL_NO_EXPORT inline Config& setWorkerThreadShutdown(
+        const ThreadShutDown& shutdown);
     MARL_NO_EXPORT inline Config& setWorkerThreadAffinityPolicy(
         const std::shared_ptr<Thread::Affinity::Policy>&);
   };
@@ -534,6 +540,12 @@ Scheduler::Config& Scheduler::Config::setWorkerThreadInitializer(
     const ThreadInitializer& initializer) {
   workerThread.initializer = initializer;
   return *this;
+}
+
+Scheduler::Config& Scheduler::Config::setWorkerThreadShutdown(
+    const ThreadShutDown& shutdown) {
+    workerThread.shutdownFunc = shutdown;
+    return *this;
 }
 
 Scheduler::Config& Scheduler::Config::setWorkerThreadAffinityPolicy(

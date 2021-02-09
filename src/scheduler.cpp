@@ -387,6 +387,10 @@ void Scheduler::Worker::start() {
         }
         mainFiber.reset();
         Worker::current = nullptr;
+
+        if (auto const& shutdownFunc = scheduler->cfg.workerThread.shutdownFunc) {
+            shutdownFunc(id);
+        }
       });
       break;
     }
